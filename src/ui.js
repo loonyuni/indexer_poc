@@ -1939,10 +1939,46 @@ $("#generate-grocery-button")?.addEventListener("click", openGenerateModal);
 $("#generate-grocery-close")?.addEventListener("click", closeGenerateModal);
 $("#generate-grocery-modal")?.addEventListener("click", (e) => { if (e.target.id === "generate-grocery-modal") closeGenerateModal(); });
 $("#generate-grocery-confirm")?.addEventListener("click", () => runPlanAction(confirmGenerateGrocery));
-$("#add-grocery-button")?.addEventListener("click", () => {
-  const label = prompt("Add an item to the grocery list:");
-  if (label && label.trim()) runPlanAction(async () => { await addGroceryItem(label); renderGroceries(); });
+// Inline add row (replaces the native prompt()). Opening focuses the field;
+// Enter / Add commits and keeps the row open for rapid entry; Esc / Cancel hides.
+const groceryAddRow = $("#grocery-add-row");
+const groceryAddInput = $("#grocery-add-input");
+function showGroceryAdd() { if (!groceryAddRow) return; groceryAddRow.hidden = false; groceryAddInput.value = ""; groceryAddInput.focus(); }
+function hideGroceryAdd() { if (!groceryAddRow) return; groceryAddRow.hidden = true; groceryAddInput.value = ""; }
+function submitGroceryAdd() {
+  const label = groceryAddInput.value.trim();
+  if (!label) { hideGroceryAdd(); return; }
+  runPlanAction(async () => { await addGroceryItem(label); renderGroceries(); });
+  groceryAddInput.value = "";
+  groceryAddInput.focus();
+}
+$("#add-grocery-button")?.addEventListener("click", () => { if (groceryAddRow?.hidden) showGroceryAdd(); else hideGroceryAdd(); });
+$("#grocery-add-confirm")?.addEventListener("click", submitGroceryAdd);
+$("#grocery-add-cancel")?.addEventListener("click", hideGroceryAdd);
+groceryAddInput?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); submitGroceryAdd(); }
+  else if (e.key === "Escape") { e.preventDefault(); hideGroceryAdd(); }
 });
+
+// Copy the "to buy" items as plain text, one per line, for pasting into Keep /
+// Notes / etc. (Keep has no public write API, so copy-paste is the path.)
+async function copyGroceryList() {
+  const toBuy = state.grocery.filter((g) => g.status !== "got");
+  if (!toBuy.length) { showToast("Nothing to copy — the list is empty."); return; }
+  const text = toBuy.map((g) => g.display).join("\n");
+  const done = () => showToast(`Copied ${toBuy.length} item${toBuy.length === 1 ? "" : "s"} to clipboard`);
+  try {
+    await navigator.clipboard.writeText(text);
+    done();
+  } catch (e) {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try { document.execCommand("copy"); done(); } catch (_) { showToast("Copy failed — select the list manually."); }
+    ta.remove();
+  }
+}
+$("#copy-grocery-button")?.addEventListener("click", copyGroceryList);
 $("#clear-got-button")?.addEventListener("click", () => runPlanAction(async () => { await clearGrocery((g) => g.status === "got"); renderGroceries(); }));
 $("#clear-all-grocery-button")?.addEventListener("click", () => { if (confirm("Clear the whole grocery list?")) runPlanAction(async () => { await clearGrocery(() => true); renderGroceries(); }); });
 $("#staples-button")?.addEventListener("click", openStaples);

@@ -626,6 +626,9 @@ h1 em { color: var(--red); font-weight: 700; font-style: normal; }
 /* Pantry staples editor */
 .staples-add-row { display: flex; gap: 10px; margin-bottom: 14px; }
 .staples-add-row input { flex: 1; font-family: var(--mono); border-radius: 0; background: var(--white); border: 1px solid var(--rule); padding: 8px 10px; }
+.grocery-add-row { display: flex; gap: 10px; align-items: center; margin: 4px 0 14px; }
+.grocery-add-row input { flex: 1; font-family: var(--mono); border-radius: 0; background: var(--white); border: 1px solid var(--rule); padding: 8px 10px; }
+.grocery-add-row input:focus { outline: none; border-color: var(--ink); }
 .staples-list { max-height: 280px; overflow-y: auto; }
 .staples-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font: 15px var(--body); color: var(--read); }
 .staples-remove { padding: 5px 9px; font-size: 11px; }
