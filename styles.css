@@ -618,6 +618,7 @@ h1 em { color: var(--red); font-weight: 700; font-style: normal; }
 .grocery-check { accent-color: var(--tint); width: 16px; height: 16px; cursor: pointer; }
 .grocery-label { font: 16px var(--body); color: var(--read); }
 .grocery-manual { font-family: var(--mono); text-transform: uppercase; letter-spacing: .04em; font-size: 10px; color: var(--muted); }
+.grocery-source { display: block; font-family: var(--mono); text-transform: uppercase; letter-spacing: .04em; font-size: 10px; color: var(--muted); margin-top: 3px; }
 .grocery-have { border: 1px solid var(--line); background: var(--white); color: var(--muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: .04em; font-size: 10px; padding: 4px 8px; cursor: pointer; }
 .grocery-have:hover { background: var(--paper-deep); }
 .grocery-remove { border: 0; background: transparent; color: var(--muted); font-size: 16px; line-height: 1; cursor: pointer; padding: 0 4px; }
