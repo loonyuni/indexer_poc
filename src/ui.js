@@ -451,13 +451,20 @@ function renderGroceries() {
   if (!listEl) return;
   const toBuy = state.grocery.filter((g) => g.status !== "got");
   const got = state.grocery.filter((g) => g.status === "got");
+  // Map each item's recipe ids to recipe titles so the row can show where it
+  // came from. Manual items have no recipe and show "(added by you)" instead.
+  const titleById = new Map(state.recipes.map((r) => [r.id, r.title]));
+  const sourceLine = (g) => {
+    const names = (g.recipeIds || []).map((id) => titleById.get(id)).filter(Boolean);
+    return names.length ? `<span class="grocery-source">from ${esc(names.join(", "))}</span>` : "";
+  };
   const section = (title, items) => items.length ? `
     <div class="grocery-group">
       <div class="grocery-group-head">${esc(title)}</div>
       ${items.map((g) => `
         <div class="grocery-row status-${g.status}" data-grocery-id="${escAttr(g.id)}">
           <input type="checkbox" class="grocery-check" ${g.status === "got" ? "checked" : ""} aria-label="Got it" />
-          <span class="grocery-label">${esc(g.display)}${g.manual ? ` <span class="grocery-manual">(added by you)</span>` : ""}</span>
+          <span class="grocery-label">${esc(g.display)}${g.manual ? ` <span class="grocery-manual">(added by you)</span>` : ""}${sourceLine(g)}</span>
           <button class="grocery-remove" aria-label="Remove">×</button>
         </div>`).join("")}
     </div>` : "";

@@ -235,7 +235,7 @@ async function loadPlanData() {
     cloud.client.from("pantry_staples").select("name").eq("household_id", cloud.householdId).order("name")
   ]);
   state.plannedMeals = (meals || []).map((r) => ({ id: r.id, recipeId: r.recipe_id, day: r.day, sortOrder: r.sort_order, made: r.made }));
-  state.grocery = (groceries || []).map((r) => ({ id: r.id, itemKey: r.item_key, display: r.display, status: r.status, manual: r.manual, sortOrder: r.sort_order }));
+  state.grocery = (groceries || []).map((r) => ({ id: r.id, itemKey: r.item_key, display: r.display, status: r.status, manual: r.manual, sortOrder: r.sort_order, recipeIds: (r.source && r.source.recipeIds) || [] }));
   state.staples = (staples || []).map((r) => r.name);
   if (!state.staples.length) {
     await seedStaples();
@@ -296,13 +296,14 @@ async function replaceGrocery(merged) {
   }
   const rows = merged.map((m, i) => ({
     household_id: cloud.householdId, item_key: m.item_key, display: m.display,
-    status: m.status, manual: m.manual, sort_order: i, updated_at: new Date().toISOString()
+    status: m.status, manual: m.manual, source: { recipeIds: m.recipeIds || [] },
+    sort_order: i, updated_at: new Date().toISOString()
   }));
   if (!rows.length) { state.grocery = []; return; }
   const { data, error } = await cloud.client.from("grocery_items")
     .upsert(rows, { onConflict: "household_id,item_key" }).select();
   if (error) throw error;
-  state.grocery = (data || []).map((r) => ({ id: r.id, itemKey: r.item_key, display: r.display, status: r.status, manual: r.manual, sortOrder: r.sort_order }));
+  state.grocery = (data || []).map((r) => ({ id: r.id, itemKey: r.item_key, display: r.display, status: r.status, manual: r.manual, sortOrder: r.sort_order, recipeIds: (r.source && r.source.recipeIds) || [] }));
 }
 
 async function addGroceryItem(display) {
@@ -310,10 +311,10 @@ async function addGroceryItem(display) {
   const itemKey = `manual:${display.toLowerCase().trim()}`;
   const sortOrder = state.grocery.reduce((m, x) => Math.max(m, x.sortOrder), 0) + 1;
   const { data, error } = await cloud.client.from("grocery_items").insert({
-    household_id: cloud.householdId, item_key: itemKey, display: display.trim(), status: "need", manual: true, sort_order: sortOrder
+    household_id: cloud.householdId, item_key: itemKey, display: display.trim(), status: "need", manual: true, source: { recipeIds: [] }, sort_order: sortOrder
   }).select().single();
   if (error) throw error;
-  state.grocery.push({ id: data.id, itemKey, display: display.trim(), status: "need", manual: true, sortOrder });
+  state.grocery.push({ id: data.id, itemKey, display: display.trim(), status: "need", manual: true, sortOrder, recipeIds: [] });
 }
 
 async function setGroceryStatus(id, status) {

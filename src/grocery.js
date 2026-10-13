@@ -143,13 +143,14 @@ function mergeGrocery(existing, aggregated, stapleKeys) {
   for (const agg of aggregated || []) {
     const prev = existingByKey.get(agg.item_key);
     if (prev) {
-      out.push({ item_key: prev.item_key, display: agg.display, status: prev.status, manual: prev.manual });
+      out.push({ item_key: prev.item_key, display: agg.display, status: prev.status, manual: prev.manual, recipeIds: agg.recipeIds || [] });
     } else {
       out.push({
         item_key: agg.item_key,
         display: agg.display,
         status: staples.has(agg.item_key) ? GROCERY_STATUS.HAVE : GROCERY_STATUS.NEED,
-        manual: false
+        manual: false,
+        recipeIds: agg.recipeIds || []
       });
     }
   }
@@ -188,7 +189,7 @@ function selectGrocery(existing, aggregated, selectedKeys) {
   for (const agg of aggregated || []) {
     if (!sel.has(agg.item_key)) continue;
     const prev = existingByKey.get(agg.item_key);
-    out.push({ item_key: agg.item_key, display: agg.display, status: prev ? prev.status : GROCERY_STATUS.NEED, manual: false });
+    out.push({ item_key: agg.item_key, display: agg.display, status: prev ? prev.status : GROCERY_STATUS.NEED, manual: false, recipeIds: agg.recipeIds || [] });
   }
   for (const it of existing || []) {
     if (it.manual) out.push({ ...it });
