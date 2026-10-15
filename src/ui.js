@@ -1185,6 +1185,7 @@ function renderDetail(recipe) {
     <p class="eyebrow">Recipe archive · ${esc(recipe.source || "Personal recipe")}</p>
     <h2 class="drawer-title" id="drawer-title">${esc(recipe.title)}</h2>
     <p class="drawer-description">${esc(recipe.description)}</p>
+    ${/^https?:\/\//i.test(recipe.sourceUrl || "") ? `<p class="source-link"><a href="${escAttr(recipe.sourceUrl)}" target="_blank" rel="noopener noreferrer">View original recipe ↗</a></p>` : ""}
     <div class="drawer-actions">
       ${recipe.slug ? `<button class="primary-button" id="share-recipe-button"><svg class="icon"><use href="#i-share"/></svg> Share</button>` : ""}
       ${editable ? `
