@@ -154,6 +154,9 @@ h2 span { color: var(--muted); font: 400 11px var(--mono); vertical-align: middl
 .drawer-topline { display: flex; justify-content: space-between; align-items: start; gap: 20px; }
 .drawer-title { margin: 0 0 10px; font: 500 46px/.95 var(--display); letter-spacing: -.06em; }
 .drawer-description { max-width: 450px; color: var(--muted); line-height: 1.65; }
+.source-link { margin: 8px 0 0; font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .05em; }
+.source-link a { color: var(--tint); text-decoration: none; border-bottom: 1px solid currentColor; padding-bottom: 1px; }
+.source-link a:hover { opacity: .8; }
 .drawer-actions { display: flex; gap: 8px; margin-top: 20px; }
 .danger-button { border: 1px solid #d4a49a; border-radius: 4px; padding: 10px 14px; background: transparent; color: var(--red-dark); font-weight: 700; font-size: 12px; }
 .danger-button:hover { background: #fae9e4; }
