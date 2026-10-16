@@ -72,6 +72,15 @@ function loadCloudRecipes() {
 async function loadCloudRecipesInner() {
   if (!cloud.client || !cloud.session) return;
   const localCodexRecipes = state.recipes.filter((recipe) => recipe.localOnly);
+  // Instant paint from the cached library (stale-while-revalidate): a repeat
+  // visit shows recipes immediately instead of a skeleton while the membership/
+  // recipes/cooks/ratings/variants/tags round-trips (and any project resume) run.
+  const cachedCloud = loadCachedCloud();
+  if (cachedCloud && cachedCloud.length) {
+    state.recipes = cachedCloud;
+    state.booting = false;
+    render();
+  }
   const { data: membership, error: memberError } = await cloud.client
     .from("household_members")
     .select("id, household_id")
@@ -101,6 +110,12 @@ async function loadCloudRecipesInner() {
   const rowsById = new Map((data || []).map((row) => [row.id, row]));
   state.recipes = (data || []).map(recipeFromRow);
   cloud.connected = true;
+  // Paint the real library now, after a single round-trip. Cook counts,
+  // ratings, variants and tags below only enrich it and re-render; they must
+  // not keep the skeleton up.
+  state.booting = false;
+  render();
+  saveCachedCloud(state.recipes);
 
   try { await loadPlanData(); } catch (e) { console.error("loadPlanData failed", e); }
 
@@ -119,7 +134,9 @@ async function loadCloudRecipesInner() {
   // Backfill image/measurement columns only for rows that are actually stale.
   // Previously this issued an UPDATE for every image-bearing recipe on every
   // page load; now we compare against the fetched row and skip no-op writes.
-  await Promise.all(state.recipes
+  // Fire-and-forget: these are no-op-skipping writes that don't change what the
+  // user sees, so they run in the background rather than blocking the load.
+  Promise.all(state.recipes
     .filter((recipe) => recipe.imageUrls?.length)
     .filter((recipe) => {
       const row = rowsById.get(recipe.id);
@@ -220,6 +237,7 @@ async function loadCloudRecipesInner() {
   }
   state.booting = false;
   render();
+  saveCachedCloud(state.recipes);
   await openInitialSharedRecipe();
 }
 
@@ -419,6 +437,18 @@ function loadCachedPublic() {
 }
 function saveCachedPublic(list) {
   try { localStorage.setItem(PUBLIC_CACHE_KEY, JSON.stringify(list)); } catch { /* quota */ }
+}
+
+// Same stale-while-revalidate cache for the signed-in household library, so a
+// repeat visit paints instantly instead of waiting on the (sometimes cold or
+// resuming) Supabase round-trips. A separate key from the public cache keeps
+// household rows out of the signed-out gallery.
+const CLOUD_CACHE_KEY = "kitchen-archive-cloud";
+function loadCachedCloud() {
+  try { const v = JSON.parse(localStorage.getItem(CLOUD_CACHE_KEY) || "null"); return Array.isArray(v) ? v : null; } catch { return null; }
+}
+function saveCachedCloud(list) {
+  try { localStorage.setItem(CLOUD_CACHE_KEY, JSON.stringify(list)); } catch { /* quota */ }
 }
 
 // A static snapshot of the public library committed to the repo and served by
